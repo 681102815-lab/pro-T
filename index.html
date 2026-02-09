@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>CondoCare - Start</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(180deg, #030309, #071018);
+            font-family: Inter, system-ui;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(12, 18, 32, 0.8);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(109, 221, 255, 0.2);
+        }
+
+        h1 {
+            margin: 0 0 20px 0;
+            color: #6df;
+        }
+
+        a {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 15px 40px;
+            background: linear-gradient(90deg, #6df, #a04dff);
+            color: #021029;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        a:hover {
+            transform: scale(1.05);
+        }
+
+        .info {
+            color: #9fb2c8;
+            font-size: 14px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🏢 CondoCare</h1>
+        <p>Click to open the application:</p>
+        <a href="./Test%20(1).html">
+            📱 เปิด CondoCare
+        </a>
+        <div class="info">
+            <p>⚠️ Make sure both servers are running:</p>
+            <p>1. Backend: <code>cd backend && npm run dev</code></p>
+            <p>2. Frontend: <code>npx http-server -p 3000</code></p>
+        </div>
+    </div>
+</body>
+
+</html>

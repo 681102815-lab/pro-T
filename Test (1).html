@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CondoCare — All In One</title>
+
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --panel: #071021;
+      --muted: #9fb2c8;
+      --accent: #6df;
+      --accent2: #a04dff;
+      --card: #0c1220;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui;
+      background: linear-gradient(180deg, #030309, #071018);
+      color: #ffffff;
+      min-height: 100vh;
+      letter-spacing: 0.3px;
+    }
+
+    h2,
+    h3,
+    h4 {
+      color: #ffffff;
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 18px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .01));
+      border: 1px solid rgba(255, 255, 255, .04);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #021029;
+    }
+
+    .ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .08);
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 12px;
+    }
+
+    .nav-link {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .nav-link.active {
+      background: rgba(109, 221, 255, .08);
+      color: var(--accent);
+    }
+
+    .tag {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .tag.wait {
+      background: #ffc107;
+      color: #000
+    }
+
+    .tag.doing {
+      background: #17a2b8
+    }
+
+    .tag.done {
+      background: #28a745
+    }
+
+    textarea,
+    select,
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(109, 221, 255, .3);
+      background: rgba(12, 18, 32, .8);
+      color: #eaf6ff;
+      font-size: 14px;
+    }
+
+    textarea::placeholder,
+    select::placeholder,
+    input::placeholder {
+      color: #9fb2c8;
+    }
+
+    textarea:focus,
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: #6df;
+      background: rgba(12, 18, 32, .95);
+      box-shadow: 0 0 8px rgba(109, 221, 255, .2);
+    }
+
+    select option {
+      background: #0c1220;
+      color: #eaf6ff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ================= LOGIN ================= -->
+  <div id="loginOverlay" class="container" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+background:#05070c;z-index:9999">
+
+    <div class="card" style="max-width:420px;width:100%">
+      <h3>เข้าสู่ระบบ CondoCare</h3>
+      <div class="muted">Admin / ช่าง / ผู้พัก</div>
+
+      <input id="loginUser" placeholder="username" autocomplete="off">
+      <input id="loginPass" type="password" placeholder="password" style="margin-top:8px" autocomplete="off">
+
+      <button class="primary" onclick="doLogin()" style="margin-top:10px;width:100%;cursor:pointer">เข้าสู่ระบบ</button>
+      <div id="loginErr" class="muted" style="color:#ff8b8b;margin-top:8px"></div>
+
+      <div class="muted" style="margin-top:10px">
+        ตัวอย่างบัญชี<br>
+        admin / 1234<br>
+        tech / 1234<br>
+        resident / 1234
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= APP ================= -->
+  <div class="container hidden" id="app">
+
+    <div class="header card">
+      <h2>CondoCare</h2>
+      <div>
+        <span id="userInfo" class="muted"></span>
+        <button class="ghost" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <aside class="card">
+        <button class="nav-link active" data-page="overview">ภาพรวม</button>
+        <button class="nav-link" data-page="report">แจ้งปัญหา</button>
+        <button class="nav-link" data-page="done">งานเสร็จแล้ว</button>
+        <button class="nav-link" data-page="manage">จัดการงาน</button>
+      </aside>
+
+      <main class="card">
+
+        <section id="overview">
+          <h3>📊 ภาพรวมระบบ</h3>
+          <div id="stats"></div>
+          <hr style="margin:24px 0;opacity:0.2">
+          <div id="monthlyStats"></div>
+        </section>
+
+        <section id="report" class="hidden">
+          <h3>📋 Report ปัญหา</h3>
+          <div
+            style="background:rgba(109,221,255,.05);padding:16px;border-radius:8px;margin-bottom:16px;border:1px solid rgba(109,221,255,.2)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="display:block;font-size:12px;color:#9fb2c8;margin-bottom:4px">📌 ประเภท</label>
+                <select id="cat" style="background:rgba(12,18,32,.8)">
+                  <option>ไฟฟ้า</option>
+                  <option>ประปา</option>
+                  <option>ลิฟต์</option>
+                  <option>อื่นๆ</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;color:#9fb2c8;margin-bottom:4px">⚠️ ความสำคัญ</label>
+                <select id="priority" style="background:rgba(12,18,32,.8)">
+                  <option value="low">ต่ำ - Low</option>
+                  <option value="medium" selected>ปกติ - Medium</option>
+                  <option value="high">สูง - High</option>
+                  <option value="critical">วิกฤต - Critical</option>
+                </select>
+              </div>
+            </div>
+            <label style="display:block;font-size:12px;color:#9fb2c8;margin-bottom:4px;margin-top:12px">📝
+              รายละเอียด</label>
+            <textarea id="detail" placeholder="อธิบายปัญหาที่พบ..." style="min-height:100px"></textarea>
+            <button class="primary" onclick="submitReport()" style="margin-top:10px;width:100%">📤 ส่ง Report</button>
+          </div>
+
+          <h4 style="margin-top:20px;color:#6df;border-bottom:1px solid rgba(109,221,255,.2);padding-bottom:8px">📊
+            Report ของฉัน</h4>
+          <div id="myReports"></div>
+        </section>
+
+        <section id="done" class="hidden">
+          <h3>✅ งานเสร็จแล้ว</h3>
+          <div id="doneList"></div>
+        </section>
+
+        <section id="manage" class="hidden">
+          <h3>จัดการงาน</h3>
+          <div id="workList"></div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    /* ================= DEBUG ================= */
+    window.onerror = function (msg, url, line) {
+      alert("JS Error: " + msg + "\nLine: " + line);
+      return false;
+    };
+
+    /* ================= CONSTANTS ================= */
+    const KEY_SESSION = "cc_session_user";
+    const KEY_REPORTS = "cc_reports_allinone";
+
+    /* ================= API CONFIG ================= */
+    const API_BASE = () => '/api';
+    const USERS = [
+      { u: "admin", p: "1234", role: "admin", name: "Admin" },
+      { u: "tech", p: "1234", role: "tech", name: "ช่าง" },
+      { u: "resident", p: "1234", role: "resident", name: "ผู้พัก" }
+    ];
+
+    async function doLogin() {
+      try {
+        console.log("doLogin called");
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        const err = document.getElementById('loginErr');
+
+        if (!u || !p) { err.innerText = "❌ กรุณากรอก username และ password"; return; }
+
+        console.log("Logging in with:", u);
+        const res = await fetch(`${API_BASE()}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+
+        const json = await res.json();
+
+        if (!res.ok || json.error) {
+          err.innerText = "❌ " + (json.message || "Login failed");
+          return;
+        }
+
+        // Save session with token
+        const session = {
+          u: json.user.username,
+          role: json.user.role,
+          name: json.user.firstName || json.user.username,
+          token: json.token,
+          id: json.user.id
+        };
+
+        localStorage.setItem(KEY_SESSION, JSON.stringify(session));
+        err.innerText = "✓ เข้าสู่ระบบสำเร็จ...";
+        setTimeout(initApp, 300);
+
+      } catch (e) { console.error("doLogin error:", e); document.getElementById('loginErr').innerText = "❌ ระบบขัดข้อง: " + e.message; }
+    }
+
+    function logout() {
+      localStorage.removeItem(KEY_SESSION);
+      location.reload();
+    }
+
+    function initApp() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION) || "null");
+        if (!s || s === null) { console.log("No session found"); return; }
+        console.log("User logged in:", s.name);
+        const loginOverlay = document.getElementById('loginOverlay');
+        const app = document.getElementById('app');
+        const userInfo = document.getElementById('userInfo');
+        if (loginOverlay) { loginOverlay.style.display = "none"; }
+        if (app) { app.classList.remove("hidden"); }
+        if (userInfo) userInfo.innerText = `${s.name} (${s.role})`;
+        applyRole(s.role);
+        setupNav();
+        renderAll();
+        // Trigger first tab
+        const firstNav = document.querySelector('.nav-link');
+        if (firstNav) firstNav.click();
+      } catch (e) { console.error("initApp error:", e); }
+    }
+
+    function setupNav() {
+      document.querySelectorAll('.nav-link').forEach(b => {
+        b.onclick = () => {
+          document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+          const page = document.getElementById(b.dataset.page);
+          if (page) page.classList.remove('hidden');
+        };
+      });
+    }
+
+    /* ================= ROLE ================= */
+    function applyRole(role) {
+      if (role === "resident") {
+        const manageBtn = document.querySelector('[data-page="manage"]');
+        if (manageBtn) manageBtn.style.display = "none";
+      } else {
+        const doneBtn = document.querySelector('[data-page="done"]');
+        if (doneBtn) doneBtn.style.display = "none";
+      }
+    }
+
+    function loadReports() { return JSON.parse(localStorage.getItem(KEY_REPORTS) || "[]") }
+    function saveReports(v) { localStorage.setItem(KEY_REPORTS, JSON.stringify(v)) }
+    function uid() { return Date.now() + Math.floor(Math.random() * 999) }
+
+    /* ================= REPORT ================= */
+    async function submitReport() {
+      const detail_val = document.getElementById('detail').value.trim();
+      if (!detail_val) { alert("❌ กรุณากรอกรายละเอียด"); return; }
+
+      const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+      if (!s || !s.token) { alert("❌ Session expired, please login again"); logout(); return; }
+
+      const reportId = uid();
+      const category = document.getElementById('cat').value;
+      const priority = document.getElementById('priority').value;
+
+      console.log("🔹 Submitting report to API...");
+
+      fetch(`${API_BASE()}/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + s.token
+        },
+        body: JSON.stringify({
+          reportId: reportId,
+          category: category,
+          detail: detail_val,
+          priority: priority,
+          owner: s.u
+        })
+      })
+        .then(res => {
+          if (!res.ok) return res.json().then(e => { throw new Error(e.message || res.statusText) });
+          return res.json();
+        })
+        .then(json => {
+          console.log("✓ Report created:", json);
+          document.getElementById('detail').value = "";
+          document.getElementById('priority').value = "medium";
+          alert("✓ ส่ง Report สำเร็จ!");
+          renderAll();
+        })
+        .catch(err => {
+          console.error("❌ Error:", err);
+          alert("❌ เกิดข้อผิดพลาด: " + err.message);
+        });
+    }
+
+    function deleteReport(id) {
+      if (!confirm("ต้องการลบงานนี้หรือไม่?")) return;
+
+      const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+      if (!s || !s.token) return;
+
+      console.log("🗑️ Deleting report:", id);
+      fetch(`${API_BASE()}/reports/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + s.token }
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Delete failed");
+          return res.json();
+        })
+        .then(() => {
+          console.log("✓ Report deleted");
+          renderAll(); // Sync from server
+        })
+        .catch(err => console.error("❌ Delete failed:", err));
+    }
+
+    function addFeedback(id) {
+      const feedback = prompt("เพิ่มหมายเหตุ:");
+      if (feedback !== null && feedback.trim()) {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+        if (!s || !s.token) return;
+
+        fetch(`${API_BASE()}/reports/${id}/feedback`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + s.token
+          },
+          body: JSON.stringify({ feedback: feedback })
+        })
+          .then(res => res.ok ? res.json() : Promise.reject(res))
+          .then(() => {
+            console.log("✓ Feedback added");
+            renderAll();
+          })
+          .catch(err => console.error("❌ Add feedback failed:", err));
+      }
+    }
+
+    /* ================= RENDER ================= */
+    async function renderStats() {
+      try {
+        const l = loadReports();
+        const done = l.filter(x => x.status === "เสร็จสิ้น").length;
+        const doing = l.filter(x => x.status === "กำลังดำเนินการ").length;
+        const wait = l.filter(x => x.status === "รอรับเรื่อง").length;
+        const completionRate = l.length > 0 ? Math.round((done / l.length) * 100) : 0;
+
+        // นับปัญหาตามประเภท
+        const categoryCount = {};
+        l.forEach(r => {
+          categoryCount[r.category] = (categoryCount[r.category] || 0) + 1;
+        });
+        const topCategory = Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0];
+
+        const stats = document.getElementById('stats');
+        if (stats) stats.innerHTML = `
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0">
+<div style="background:rgba(109,221,255,.1);padding:16px;border-radius:8px;border-left:4px solid #6df">
+<div style="font-size:28px;font-weight:bold;color:#6df">${l.length}</div>
+<div style="font-size:13px;color:#9fb2c8">ทั้งหมด</div>
+<div style="font-size:11px;color:#9fb2c8;margin-top:4px">งานทั้งสิ้น</div>
+</div>
+<div style="background:rgba(24,162,184,.1);padding:16px;border-radius:8px;border-left:4px solid #17a2b8">
+<div style="font-size:28px;font-weight:bold;color:#17a2b8">${doing}</div>
+<div style="font-size:13px;color:#9fb2c8">กำลังดำเนินการ</div>
+<div style="font-size:11px;color:#9fb2c8;margin-top:4px">${l.length > 0 ? Math.round((doing / l.length) * 100) : 0}% ของทั้งหมด</div>
+</div>
+<div style="background:rgba(40,167,69,.1);padding:16px;border-radius:8px;border-left:4px solid #28a745">
+<div style="font-size:28px;font-weight:bold;color:#28a745">${done}</div>
+<div style="font-size:13px;color:#9fb2c8">เสร็จสิ้น</div>
+<div style="font-size:11px;color:#9fb2c8;margin-top:4px">${completionRate}% สำเร็จ</div>
+</div>
+</div>
+<div style="background:rgba(255,193,7,.1);padding:12px;border-radius:8px;border-left:4px solid #ffc107;margin:8px 0">
+<div style="font-size:13px;color:#ffc107">⏳ รอรับเรื่อง: ${wait} (${l.length > 0 ? Math.round((wait / l.length) * 100) : 0}%)</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+<div style="background:rgba(108,117,125,.1);padding:12px;border-radius:8px;border-left:3px solid #9fb2c8">
+<div style="font-size:16px;font-weight:bold;color:#eaf6ff">${doing + wait}</div>
+<div style="font-size:12px;color:#9fb2c8">งานที่เหลือ</div>
+</div>
+<div style="background:rgba(220,53,69,.1);padding:12px;border-radius:8px;border-left:3px solid #dc3545">
+<div style="font-size:16px;font-weight:bold;color:#eaf6ff">${l.length > 0 ? (l.length - done) : 0}</div>
+<div style="font-size:12px;color:#9fb2c8">ยังไม่เสร็จสิ้น</div>
+</div>
+</div>
+<div style="background:rgba(255,107,107,.1);padding:12px;border-radius:8px;border-left:4px solid #ff6b6b;margin:12px 0">
+<div style="font-size:14px;font-weight:bold;color:#ff6b6b">🔥 ปัญหาที่มีการแจ้งมากที่สุด</div>
+<div style="font-size:24px;font-weight:bold;color:#ff6b6b;margin-top:8px">${topCategory ? topCategory[0] : "ไม่มีข้อมูล"}</div>
+<div style="font-size:12px;color:#9fb2c8;margin-top:4px">${topCategory ? topCategory[1] + " งาน" : ""}${topCategory ? " (" + Math.round((topCategory[1] / l.length) * 100) + "%):" : ""}</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0">
+${Object.entries(categoryCount).sort((a, b) => b[1] - a[1]).map(([cat, count]) => `
+<div style="background:rgba(109,221,255,.05);padding:10px;border-radius:6px;border:1px solid rgba(109,221,255,.2);text-align:center">
+<div style="font-size:20px;font-weight:bold;color:#6df">${count}</div>
+<div style="font-size:11px;color:#9fb2c8;margin-top:4px">${cat}</div>
+</div>
+`).join("")}
+</div>
+`;
+      } catch (e) { console.error("renderStats error:", e); }
+    }
+
+    function renderMonthly() {
+      try {
+        const l = loadReports().filter(x => x.status === "เสร็จสิ้น");
+        const m = {};
+        let maxMonth = "";
+        let maxCount = 0;
+        let totalDone = 0;
+        l.forEach(r => {
+          const d = new Date(r.created);
+          if (isNaN(d)) return;
+          const k = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+          m[k] = (m[k] || 0) + 1;
+          totalDone++;
+          if (m[k] > maxCount) { maxCount = m[k]; maxMonth = k; }
+        });
+        const monthlyStats = document.getElementById('monthlyStats');
+        if (monthlyStats) {
+          let content = "<div style='margin:16px 0'><b style='font-size:16px;color:#6df'>📈 งานเสร็จรายเดือน</b>";
+          if (Object.keys(m).length) {
+            const avgPerMonth = Math.round(totalDone / Object.keys(m).length);
+            content += `<div style='margin:8px 0;font-size:12px;color:#9fb2c8'>📊 รวม ${totalDone} งาน | เฉลี่ย ${avgPerMonth} งาน/เดือน</div>`;
+            content += "<div style='margin-top:12px'>";
+            Object.entries(m).reverse().forEach(([k, v]) => {
+              const isMax = k === maxMonth ? "background:rgba(109,221,255,.1);border-left:4px solid #6df" : "";
+              const percentage = Math.round((v / totalDone) * 100);
+              content += `<div style='padding:8px;margin:4px 0;border-radius:4px;${isMax};display:flex;justify-content:space-between'><div><b>${k}:</b> <span style='font-size:16px;font-weight:bold;color:#6df'>${v}</span> งาน</div><span style='color:#9fb2c8'>${percentage}%</span></div>`;
+            });
+            content += "</div>";
+          } else {
+            content += "<div style='color:#9fb2c8;margin-top:8px'>ยังไม่มีงานเสร็จ</div>";
+          }
+          content += "</div>";
+          monthlyStats.innerHTML = content;
+        }
+      } catch (e) { console.error("renderMonthly error:", e); }
+    }
+
+    function renderMy() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+        if (!s) return;
+        const l = loadReports().filter(x => x.owner === s.u);
+        const myReports = document.getElementById('myReports');
+        if (!myReports) return;
+
+        const priorityColor = { low: "#28a745", medium: "#17a2b8", high: "#ffc107", critical: "#ff6b6b" };
+        const priorityText = { low: "ต่ำ", medium: "ปกติ", high: "สูง", critical: "วิกฤต" };
+
+        myReports.innerHTML = l.length ? `<div style="margin-top:8px">${l.map(r => `
+<div class="card" style="border-left:4px solid ${r.status === "รอรับเรื่อง" ? "#ffc107" : r.status === "กำลังดำเนินการ" ? "#17a2b8" : "#28a745"}">
+<div style="display:flex;justify-content:space-between;align-items:start">
+<div style="flex:1">
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+<b style="font-size:14px">#${r.id} - ${r.category}</b>
+<span class="tag ${r.status === "รอรับเรื่อง" ? "wait" : r.status === "กำลังดำเนินการ" ? "doing" : "done"}">${r.status}</span>
+<span style="background:${priorityColor[r.priority] || "#17a2b8"};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">⚠️ ${priorityText[r.priority] || "ปกติ"}</span>
+</div>
+<div style="margin-top:4px;font-size:12px;color:#9fb2c8">📅 ${r.created}</div>
+<div style="margin-top:8px;line-height:1.5;color:#eaf6ff">${r.detail}</div>
+${r.feedback ? `<div style="background:#0c1220;padding:10px;margin-top:8px;border-left:3px solid #6df;border-radius:4px"><b>💬 ตอบกลับจากช่าง:</b><br>${r.feedback}</div>` : ""}
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid rgba(109,221,255,.1);padding-top:10px">
+<button class="ghost" style="padding:6px 12px;font-size:12px;background:rgba(40,167,69,.1);border:1px solid #28a745;color:#28a745" onclick="toggleLike(${r.id},'${s.u}')">👍 ถูกใจ ${r.likes ? r.likes.count || 0 : 0}</button>
+<button class="ghost" style="padding:6px 12px;font-size:12px;background:rgba(220,53,69,.1);border:1px solid #dc3545;color:#dc3545" onclick="toggleDislike(${r.id},'${s.u}')">👎 ไม่ถูกใจ ${r.dislikes ? r.dislikes.count || 0 : 0}</button>
+${r.status === "เสร็จสิ้น" ? `<button class="ghost" style="padding:6px 10px;font-size:12px" onclick="addComment(${r.id})">💬 ให้ความเห็น</button>` : ""}
+<button class="ghost" style="padding:4px 8px;font-size:12px;white-space:nowrap" onclick="deleteReport(${r.id})">🗑️ ลบ</button>
+</div>
+</div>
+</div>
+</div>`).join("")}</div>` : "<div style=\"background:rgba(255,255,255,.02);padding:16px;border-radius:8px;text-align:center;color:#9fb2c8\">📭 ยังไม่มี Report</div>";
+      } catch (e) { console.error("renderMy error:", e); }
+    }
+
+    function addComment(id) {
+      const comment = prompt("เพิ่มความเห็น:");
+      if (comment !== null && comment.trim()) {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+        if (!s || !s.token) return;
+
+        fetch(`${API_BASE()}/reports/${id}/comment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + s.token
+          },
+          body: JSON.stringify({ author: s.u, text: comment })
+        })
+          .then(res => res.ok ? res.json() : Promise.reject(res))
+          .then(() => { renderAll(); })
+          .catch(err => console.error("addComment failed", err));
+      }
+    }
+
+    function renderDone() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+        if (!s) return;
+        const l = loadReports().filter(x => x.owner === s.u && x.status === "เสร็จสิ้น");
+        const doneList = document.getElementById('doneList');
+        if (!doneList) return;
+        doneList.innerHTML = l.length ? `<div style="margin-top:8px">${l.map(r => `
+<div class="card" style="border-left:4px solid #28a745">
+<div style="display:flex;justify-content:space-between">
+<div style="flex:1">
+<b style="font-size:14px">✅ ${r.category}</b>
+<div style="margin-top:8px;font-size:12px;color:#9fb2c8">📅 ${r.created} | #${r.id}</div>
+<div style="margin-top:8px;line-height:1.5;color:#eaf6ff">${r.detail}</div>
+${r.feedback ? `<div style="background:#0c1220;padding:10px;margin-top:8px;border-left:3px solid #6df;border-radius:4px"><b>💬 หมายเหตุจากช่าง:</b><br>${r.feedback.split("\n").join("<br>")}</div>` : ""}
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid rgba(109,221,255,.1);padding-top:10px">
+<button class="ghost" style="padding:6px 12px;font-size:12px;background:rgba(40,167,69,.1);border:1px solid #28a745;color:#28a745" onclick="toggleLike(${r.id},'${s.u}')">👍 ถูกใจ ${r.likes ? r.likes.count || 0 : 0}</button>
+<button class="ghost" style="padding:6px 12px;font-size:12px;background:rgba(220,53,69,.1);border:1px solid #dc3545;color:#dc3545" onclick="toggleDislike(${r.id},'${s.u}')">👎 ไม่ถูกใจ ${r.dislikes ? r.dislikes.count || 0 : 0}</button>
+<button class="ghost" style="padding:6px 10px;font-size:12px" onclick="addComment(${r.id})">💬 ให้ความเห็น</button>
+</div>
+</div>
+</div>
+</div>`).join("")}</div>` : "<div style=\"background:rgba(255,255,255,.02);padding:16px;border-radius:8px;text-align:center;color:#9fb2c8\">ยังไม่มีงานเสร็จแล้ว</div>";
+      } catch (e) { console.error("renderDone error:", e); }
+    }
+
+    function renderManage() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+        if (!s || s.role === "resident") return;
+        const l = loadReports();
+        const workList = document.getElementById('workList');
+        if (!workList) return;
+
+        const priorityColor = { low: "#28a745", medium: "#17a2b8", high: "#ffc107", critical: "#ff6b6b" };
+        const priorityText = { low: "ต่ำ", medium: "ปกติ", high: "สูง", critical: "วิกฤต" };
+
+        workList.innerHTML = l.length ? `
+<div style="overflow-x:auto;margin-top:8px">
+<table style="width:100%;border-collapse:collapse;font-size:13px">
+<thead>
+<tr style="background:rgba(109,221,255,.1);border-bottom:2px solid rgba(109,221,255,.3)">
+<th style="padding:10px;text-align:left;color:#6df">#ID</th>
+<th style="padding:10px;text-align:left;color:#6df">ประเภท</th>
+<th style="padding:10px;text-align:left;color:#6df">ผู้แจ้ง</th>
+<th style="padding:10px;text-align:left;color:#6df">วันที่</th>
+<th style="padding:10px;text-align:left;color:#6df">ความสำคัญ</th>
+<th style="padding:10px;text-align:left;color:#6df">สถานะ</th>
+<th style="padding:10px;text-align:left;color:#6df">การดำเนินการ</th>
+</tr>
+</thead>
+<tbody>
+${l.sort((a, b) => {
+          const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+          return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+        }).map(r => `
+<tr style="border-bottom:1px solid rgba(109,221,255,.1);hover{background:rgba(109,221,255,.05)}">
+<td style="padding:10px"><b style="color:#6df">#${r.id}</b></td>
+<td style="padding:10px">${r.category}</td>
+<td style="padding:10px"><span style="background:rgba(109,221,255,.1);padding:4px 8px;border-radius:4px">${r.owner}</span></td>
+<td style="padding:10px;font-size:11px">${r.created}</td>
+<td style="padding:10px"><span style="background:${priorityColor[r.priority] || "#17a2b8"};color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold">⚠️ ${priorityText[r.priority] || "ปกติ"}</span></td>
+<td style="padding:10px"><span class="tag ${r.status === "รอรับเรื่อง" ? "wait" : r.status === "กำลังดำเนินการ" ? "doing" : "done"}">${r.status}</span></td>
+<td style="padding:10px">
+<select onchange="changeStatus(${r.id},this.value)" style="width:120px;padding:4px;font-size:11px;background:rgba(12,18,32,.8)">
+<option ${r.status === "รอรับเรื่อง" ? "selected" : ""}>รอรับเรื่อง</option>
+<option ${r.status === "กำลังดำเนินการ" ? "selected" : ""}>กำลังดำเนินการ</option>
+<option ${r.status === "เสร็จสิ้น" ? "selected" : ""}>เสร็จสิ้น</option>
+</select>
+<button class="ghost" style="width:auto;padding:4px 8px;font-size:11px;margin-left:4px" onclick="addFeedback(${r.id})">✏️ หมายเหตุ</button>
+</td>
+</tr>
+<tr style="background:rgba(0,0,0,.2)">
+<td colspan="7" style="padding:10px">
+<b>📝 รายละเอียด:</b> ${r.detail}<br>
+${r.feedback ? `<b style="color:#6df">💬 หมายเหตุ:</b> ${r.feedback}<br>` : ""}
+<b style="color:#28a745">👍 ถูกใจ:</b> ${r.likes ? r.likes.count || 0 : 0} | <b style="color:#dc3545">👎 ไม่ถูกใจ:</b> ${r.dislikes ? r.dislikes.count || 0 : 0}
+</td>
+</tr>
+`).join("")}
+</tbody>
+</table>
+</div>
+`: "<div style=\"background:rgba(255,255,255,.02);padding:16px;border-radius:8px;text-align:center;color:#9fb2c8\">📭 ไม่มี Report ที่จัดการ</div>";
+      } catch (e) { console.error("renderManage error:", e); }
+    }
+
+    function changeStatus(id, v) {
+      console.log("📊 Changing status to:", v, "for report:", id);
+      const s = JSON.parse(localStorage.getItem(KEY_SESSION));
+      if (!s || !s.token) return;
+
+      fetch(`${API_BASE()}/reports/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + s.token
+        },
+        body: JSON.stringify({ status: v })
+      })
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(() => {
+          console.log("✓ Status updated");
+          renderAll();
+        })
+        .catch(err => console.error("❌ Status update failed:", err));
+    }
+
+    async function syncReportsFromServer() {
+      try {
+        console.log("📥 Syncing reports from server...");
+        // If not logged in, we might use public endpoints or just skip
+        const res = await fetch(`${API_BASE()}/reports`);
+
+        if (!res.ok) {
+          console.warn("Sync failed, status:", res.status);
+          return;
+        }
+
+        const json = await res.json();
+        console.log("Server reports:", json.data?.length || 0);
+
+        if (json.data && Array.isArray(json.data)) {
+          // Normalize data
+          const reports = json.data.map(r => ({
+            id: r.id,
+            reportId: r.reportId,
+            category: r.category,
+            priority: r.priority || 'medium',
+            detail: r.detail,
+            created: r.createdAt ? new Date(r.createdAt).toLocaleString('th-TH') : "N/A",
+            status: r.status,
+            owner: r.owner,
+            feedback: r.feedback,
+            likes: { count: r.likesCount || 0, users: [] },
+            dislikes: { count: r.dislikesCount || 0, users: [] }
+          }));
+          saveReports(reports);
+        }
+      } catch (e) {
+        console.warn('❌ Sync from server failed:', e.message);
+      }
+    }
+
+    async function toggleLike(id, user) {
+      const s = JSON.parse(localStorage.getItem(KEY_SESSION) || "null");
+      const token = s && s.token;
+
+      try {
+        const res = await fetch(`${API_BASE()}/reports/${id}/like`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user })
+        });
+        if (res.ok) { await renderAll(); return; }
+        else {
+          const json = await res.json();
+          if (json.message) alert(json.message);
+        }
+      } catch (e) { console.warn('like api failed', e); }
+    }
+
+    async function toggleDislike(id, user) {
+      const s = JSON.parse(localStorage.getItem(KEY_SESSION) || "null");
+
+      try {
+        const res = await fetch(`${API_BASE()}/reports/${id}/dislike`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user })
+        });
+        if (res.ok) { await renderAll(); return; }
+        else {
+          const json = await res.json();
+          if (json.message) alert(json.message);
+        }
+      } catch (e) { console.warn('dislike api failed', e); }
+    }
+
+    async function renderAll() {
+      try {
+        console.log("🔄 Rendering all data...");
+        await syncReportsFromServer();
+        renderStats();
+        renderMonthly();
+        renderMy();
+        renderDone();
+        renderManage();
+        console.log("✓ Render complete");
+      } catch (e) { console.error("❌ renderAll error:", e); }
+    }
+
+    window.onload = () => {
+      console.log("Page loaded");
+      initApp();
+      const loginUser = document.getElementById('loginUser');
+      const loginPass = document.getElementById('loginPass');
+
+      if (loginUser) loginUser.addEventListener('keypress', (e) => { if (e.key === 'Enter') doLogin(); });
+      if (loginPass) loginPass.addEventListener('keypress', (e) => { if (e.key === 'Enter') doLogin(); });
+    };
+  </script>
+
+</body>
+
+</html>
