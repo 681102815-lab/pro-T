@@ -20,7 +20,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '.'))); // Serve frontend files from the current project directory
+app.use(express.static(path.join(__dirname, 'public'))); // Serve frontend files from the public directory
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -29,7 +29,7 @@ app.use('/api/users', userRoutes);
 
 // Serve index.html at root
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Health check
