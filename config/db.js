@@ -1,5 +1,4 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
@@ -22,6 +21,7 @@ if (process.env.DATABASE_URL) {
     console.log('✓ PostgreSQL Mode');
 } else {
     // SQLite Fallback for Local
+    const sqlite3 = require('sqlite3').verbose();
     const dbPath = path.join(__dirname, '../backend/database.db');
     const sqliteDb = new sqlite3.Database(dbPath, (err) => {
         if (!err) {
