@@ -32,6 +32,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Serve app.html explicitly if needed (fallback)
+app.get('/app.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'app.html'));
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
