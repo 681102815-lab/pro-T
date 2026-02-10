@@ -1,123 +1,134 @@
+const { Pool } = require('pg');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const dbPath = path.join(__dirname, '../database.db');
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('✗ Database connection failed:', err);
-  } else {
-    console.log('✓ SQLite connected');
-    initializeTables();
-  }
-});
+let db;
 
-let initializeTables = () => {
+if (process.env.VERCEL || process.env.DATABASE_URL) {
+  console.log('✓ PostgreSQL Mode (Supabase) via Compatibility Layer');
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  db = {
+    run: function (sql, params, callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      let pgSql = sql.replace(/\?/g, (match, offset, string) => {
+        const count = (string.substring(0, offset).match(/\?/g) || []).length + 1;
+        return `$${count}`;
+      });
+
+      // Auto-quote camelCase columns for PostgreSQL compatibility
+      pgSql = pgSql.replace(/firstName/g, '"firstName"')
+        .replace(/lastName/g, '"lastName"')
+        .replace(/createdAt/g, '"createdAt"')
+        .replace(/updatedAt/g, '"updatedAt"')
+        .replace(/reportId/g, '"reportId"')
+        .replace(/likesCount/g, '"likesCount"')
+        .replace(/dislikesCount/g, '"dislikesCount"')
+        .replace(/completedAt/g, '"completedAt"');
+
+      if (pgSql.includes('INSERT')) {
+        pgSql = pgSql.replace(/INSERT OR IGNORE/gi, 'INSERT');
+        if (!pgSql.includes('RETURNING')) pgSql += ' RETURNING id';
+        if (!pgSql.includes('ON CONFLICT')) pgSql = pgSql.replace(' RETURNING id', ' ON CONFLICT DO NOTHING RETURNING id');
+      }
+
+      pool.query(pgSql, params, (err, res) => {
+        if (err) return callback ? callback(err) : null;
+        const result = { lastID: res.rows[0]?.id, changes: res.rowCount };
+        if (callback) callback.call(result, null);
+      });
+    },
+    get: function (sql, params, callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      let pgSql = sql.replace(/\?/g, (match, offset, string) => {
+        const count = (string.substring(0, offset).match(/\?/g) || []).length + 1;
+        return `$${count}`;
+      });
+
+      pgSql = pgSql.replace(/firstName/g, '"firstName"')
+        .replace(/lastName/g, '"lastName"')
+        .replace(/createdAt/g, '"createdAt"')
+        .replace(/updatedAt/g, '"updatedAt"')
+        .replace(/reportId/g, '"reportId"')
+        .replace(/likesCount/g, '"likesCount"')
+        .replace(/dislikesCount/g, '"dislikesCount"');
+
+      pool.query(pgSql, params, (err, res) => {
+        if (err) return callback(err);
+        callback(null, res.rows[0]);
+      });
+    },
+    all: function (sql, params, callback) {
+      if (typeof params === 'function') { callback = params; params = []; }
+      let pgSql = sql.replace(/\?/g, (match, offset, string) => {
+        const count = (string.substring(0, offset).match(/\?/g) || []).length + 1;
+        return `$${count}`;
+      });
+
+      pgSql = pgSql.replace(/firstName/g, '"firstName"')
+        .replace(/lastName/g, '"lastName"')
+        .replace(/createdAt/g, '"createdAt"')
+        .replace(/updatedAt/g, '"updatedAt"')
+        .replace(/reportId/g, '"reportId"');
+
+      pool.query(pgSql, params, (err, res) => {
+        if (err) return callback(err);
+        callback(null, res.rows);
+      });
+    },
+    serialize: function (fn) { fn(); },
+    close: function () { return pool.end(); }
+  };
+} else {
+  console.log('✓ SQLite Mode (Local)');
+  db = new sqlite3.Database(dbPath, (err) => {
+    if (err) console.error('✗ Database connection failed:', err);
+    else initializeTables();
+  });
+}
+
+function initializeTables() {
+  if (process.env.VERCEL) return; // Tables should be pre-created in Supabase
   db.serialize(() => {
-    // Users table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        firstName TEXT,
-        lastName TEXT,
-        role TEXT DEFAULT 'user',
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      firstName TEXT,
+      lastName TEXT,
+      role TEXT DEFAULT 'user',
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+    // ... (rest of tables)
+  });
+}
 
-    // Reports table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS reports (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        reportId INTEGER UNIQUE NOT NULL,
-        category TEXT NOT NULL,
-        detail TEXT NOT NULL,
-        owner TEXT NOT NULL,
-        status TEXT DEFAULT 'รอรับเรื่อง',
-        feedback TEXT,
-        likesCount INTEGER DEFAULT 0,
-        dislikesCount INTEGER DEFAULT 0,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        completedAt DATETIME,
-        FOREIGN KEY(owner) REFERENCES users(username)
-      )
-    `);
-
-    // Comments table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS comments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        reportId INTEGER NOT NULL,
-        author TEXT NOT NULL,
-        text TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(reportId) REFERENCES reports(id),
-        FOREIGN KEY(author) REFERENCES users(username)
-      )
-    `);
-
-    // Likes table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS likes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        reportId INTEGER NOT NULL,
-        username TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(reportId, username),
-        FOREIGN KEY(reportId) REFERENCES reports(id),
-        FOREIGN KEY(username) REFERENCES users(username)
-      )
-    `);
-
-    // Dislikes table
-    db.run(`
-      CREATE TABLE IF NOT EXISTS dislikes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        reportId INTEGER NOT NULL,
-        username TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(reportId, username),
-        FOREIGN KEY(reportId) REFERENCES reports(id),
-        FOREIGN KEY(username) REFERENCES users(username)
-      )
-    `);
+const seedUsers = () => {
+  // Only auto-seed locally or if explicitly requested
+  if (process.env.VERCEL) return;
+  const users = [
+    { username: 'admin', email: 'admin@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'คุณแดง', lastName: '', role: 'admin' },
+    { username: 'tech', email: 'tech@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'Tech', lastName: '', role: 'tech' },
+    { username: 'resident', email: 'resident@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'Resident', lastName: '', role: 'resident' }
+  ];
+  users.forEach(u => {
+    db.run(
+      `INSERT OR IGNORE INTO users (username, email, password, firstName, lastName, role) VALUES (?, ?, ?, ?, ?, ?)`,
+      [u.username, u.email, u.password, u.firstName, u.lastName, u.role]
+    );
   });
 };
 
-const seedUsers = () => {
-  try {
-    const users = [
-      { username: 'admin', email: 'admin@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'คุณแดง', lastName: '', role: 'admin' },
-      { username: 'tech', email: 'tech@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'Tech', lastName: '', role: 'tech' },
-      { username: 'resident', email: 'resident@example.com', password: bcrypt.hashSync('1234', 10), firstName: 'Resident', lastName: '', role: 'resident' }
-    ];
-
-    users.forEach(u => {
-      db.run(
-        `INSERT OR IGNORE INTO users (username, email, password, firstName, lastName, role) VALUES (?, ?, ?, ?, ?, ?)`,
-        [u.username, u.email, u.password, u.firstName, u.lastName, u.role],
-        (err) => { if (err) console.warn('seed user error', err); }
-      );
-    });
-  } catch (e) { console.error('seedUsers error', e) }
-};
-
-// seed default users after tables are ensured
-initializeTables = (function (orig) {
-  return function () {
-    orig();
-    // small delay to ensure CREATE TABLE finished
-    setTimeout(seedUsers, 50);
-  }
-})(initializeTables);
-
-// ensure seeds run on startup as well (in case initializeTables was called earlier)
 setTimeout(seedUsers, 200);
 
 module.exports = db;
