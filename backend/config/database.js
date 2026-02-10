@@ -5,11 +5,12 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const dbPath = path.join(__dirname, '../database.db');
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
+const CORRECT_URL = 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
+const DATABASE_URL = (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('ykzltizvvpaapfvnjhde'))
+  ? process.env.DATABASE_URL
+  : CORRECT_URL;
 
-let db;
-
-if (process.env.VERCEL || process.env.DATABASE_URL) {
+if (process.env.VERCEL || process.env.DATABASE_URL || CORRECT_URL) {
   console.log('✓ PostgreSQL Mode (Supabase) via Compatibility Layer');
   const pool = new Pool({
     connectionString: DATABASE_URL,

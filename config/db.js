@@ -5,10 +5,13 @@ require('dotenv').config();
 
 let db;
 
-const HARDCODED_URL = 'postgresql://postgres:kadoojang01@db.ykzltizvvpaapfvnjhde.supabase.co:5432/postgres';
+const CORRECT_URL = 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
+const DATABASE_URL = (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('ykzltizvvpaapfvnjhde'))
+    ? process.env.DATABASE_URL
+    : CORRECT_URL;
 
-if (process.env.DATABASE_URL || HARDCODED_URL) {
-    const connectionString = process.env.DATABASE_URL || HARDCODED_URL;
+if (DATABASE_URL) {
+    const connectionString = DATABASE_URL;
     const pool = new Pool({
         connectionString: connectionString,
         ssl: { rejectUnauthorized: false }
