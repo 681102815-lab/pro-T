@@ -6,14 +6,17 @@ require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const dbPath = path.join(__dirname, '../database.db');
 const CORRECT_URL = 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
-const DATABASE_URL = (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('ykzltizvvpaapfvnjhde'))
-  ? process.env.DATABASE_URL
-  : CORRECT_URL;
 
-if (process.env.VERCEL || process.env.DATABASE_URL || CORRECT_URL) {
-  console.log('✓ PostgreSQL Mode (Supabase) via Compatibility Layer');
+// Support Vercel-Supabase Integration variables
+const DATABASE_URL = process.env.POSTGRES_URL ||
+  process.env.SUPABASE_POSTGRES_URL ||
+  process.env.DATABASE_URL ||
+  CORRECT_URL;
+
+if (process.env.VERCEL || process.env.DATABASE_URL || process.env.POSTGRES_URL || CORRECT_URL) {
+  console.log('✓ Database Mode: ' + (process.env.POSTGRES_URL ? 'Vercel Integration' : 'Direct Supabase'));
   const pool = new Pool({
-    connectionString: DATABASE_URL,
+    connectionString: DATABASE_URL.replace('?sslmode=require', ''),
     ssl: { rejectUnauthorized: false }
   });
 
