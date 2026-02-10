@@ -5,16 +5,15 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const dbPath = path.join(__dirname, '../database.db');
-const CORRECT_URL = 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
 
-// Support Vercel-Supabase Integration variables
+// Use ONLY environment variables from Vercel-Supabase Integration
 const DATABASE_URL = process.env.POSTGRES_URL ||
-  process.env.SUPABASE_POSTGRES_URL ||
-  process.env.DATABASE_URL ||
-  CORRECT_URL;
+  process.env.DATABASE_URL;
 
-if (process.env.VERCEL || process.env.DATABASE_URL || process.env.POSTGRES_URL || CORRECT_URL) {
-  console.log('✓ Database Mode: ' + (process.env.POSTGRES_URL ? 'Vercel Integration' : 'Direct Supabase'));
+let db;
+
+if (DATABASE_URL) {
+  console.log('✓ PostgreSQL Mode (Vercel Integration)');
   const pool = new Pool({
     connectionString: DATABASE_URL.replace('?sslmode=require', ''),
     ssl: { rejectUnauthorized: false }

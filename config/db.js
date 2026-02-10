@@ -5,15 +5,13 @@ require('dotenv').config();
 
 let db;
 
-const CORRECT_URL = 'postgresql://postgres:kadoojang01@db.ruphumhbauinhjujanbb.supabase.co:5432/postgres';
-const DATABASE_URL = (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('ykzltizvvpaapfvnjhde'))
-    ? process.env.DATABASE_URL
-    : CORRECT_URL;
+// Use ONLY environment variables from Vercel-Supabase Integration
+const DATABASE_URL = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 
 if (DATABASE_URL) {
     const connectionString = DATABASE_URL;
     const pool = new Pool({
-        connectionString: connectionString,
+        connectionString: connectionString.replace('?sslmode=require', ''),
         ssl: { rejectUnauthorized: false }
     });
 
